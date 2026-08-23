@@ -22,9 +22,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run build
+        env:
+          NEXT_PUBLIC_BASE_PATH: /show-it
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out

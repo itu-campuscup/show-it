@@ -1,53 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { currentHeatRankingPath, statsBaseUrl, type Activity } from "@/lib/stats";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { currentHeatSnapshotPath, statsBaseUrl, type Activity } from "@/lib/stats";
+import { isStaleSnapshot, parseCurrentHeatSnapshot, sailSlots, type Result, type Snapshot } from "@/lib/snapshot";
 import styles from "@/app/page.module.css";
 
-type CurrentHeat = { heat: number; date: string } | null;
-type Index = { lastUpdated: string; currentHeat: CurrentHeat; years: number[] };
-type Entry = { rank: number; playerName: string; teamName: string; formattedTime: string; displayLabel: string; rpm?: number; displayRpmLabel?: string; imageUrl?: string };
-type Rankings = { generatedAt: string; rankings: Entry[] };
-
 const details: Record<Activity, { title: string; icon: string; description: string }> = {
-  beer: { title: "Drink", icon: "🍺", description: "Fastest Beer times in the current heat." },
-  spin: { title: "Spin", icon: "🌪️", description: "Highest RPM in the current heat. Ten revolutions per attempt." },
-  sail: { title: "Sail", icon: "⛵", description: "Fastest Sail times in the current heat." },
+  beer: { title: "Drink", icon: "🍺", description: "Beer attempts in the published current-heat snapshot." },
+  spin: { title: "Spin", icon: "🌪️", description: "Ten-revolution RPM attempts in the published current-heat snapshot." },
+  sail: { title: "Sail", icon: "⛵", description: "Relay race progress. First team to 16 Sail logs wins." },
 };
-
-async function getJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, { cache: "no-store" });
-  if (!response.ok) throw new Error(`Stats source returned ${response.status}`);
-  return response.json() as Promise<T>;
-}
+async function getSnapshot(url: string, signal: AbortSignal): Promise<Snapshot> { const response = await fetch(url, { cache: "no-store", signal }); if (!response.ok) throw new Error(`Stats snapshot returned ${response.status}`); return parseCurrentHeatSnapshot(await response.json()); }
+function ResultRows({ entries, activity }: { entries: Result[]; activity: "beer" | "spin" }) { return <ol className={styles.rows}>{entries.map((entry) => <li key={entry.id}><span className={styles.rank}>{entry.rank}</span>{entry.imageUrl ? <img className={styles.avatar} src={entry.imageUrl} alt={`${entry.playerName}`} /> : <span className={styles.avatar} aria-hidden="true" />}<div><strong>{entry.playerName}</strong><small>{entry.teamName || "Team unavailable"}</small></div><b>{activity === "spin" ? <>{entry.displayRpmLabel}<small>({Math.round(entry.rpm ?? 0)} RPM)</small></> : <>{entry.displayLabel}<small>({entry.formattedTime})</small></>}</b></li>)}</ol>; }
 
 export function SpectatorPage({ activity }: { activity: Activity }) {
-  const [index, setIndex] = useState<Index | null>(null);
-  const [rankings, setRankings] = useState<Rankings | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const source = useMemo(() => statsBaseUrl(process.env.NEXT_PUBLIC_STATS_BASE_URL), []);
-  const copy = details[activity];
-
-  useEffect(() => {
-    let active = true;
-    const load = async () => {
-      try {
-        const nextIndex = await getJson<Index>(`${source}/index.json`);
-        if (!nextIndex.currentHeat) throw new Error("No current heat has been published yet");
-        const year = new Date(nextIndex.currentHeat.date).getFullYear();
-        const nextRankings = await getJson<Rankings>(currentHeatRankingPath(source, year, nextIndex.currentHeat.heat, activity));
-        if (active) { setIndex(nextIndex); setRankings(nextRankings); setError(null); }
-      } catch (cause) { if (active) setError(cause instanceof Error ? cause.message : "Could not load spectator stats"); }
-    };
-    load();
-    const timer = window.setInterval(load, 60_000);
-    return () => { active = false; window.clearInterval(timer); };
-  }, [activity, source]);
-
-  return <main className={styles.main}>
-    <nav className={styles.nav} aria-label="Activities"><Link href="/drink">🍺 Drink</Link><Link href="/spin">🌪️ Spin</Link><Link href="/sail">⛵ Sail</Link></nav>
-    <header className={styles.header}><div><p className={styles.kicker}>CAMPUSCUP · SPECTATOR VIEW</p><h1>{copy.icon} {copy.title}</h1><p className={styles.description}>{copy.description}</p></div><div className={styles.status}><span>● REFRESHES EVERY 5 MIN</span><small>{index ? `Heat ${index.currentHeat?.heat} · data updated ${new Date(index.lastUpdated).toLocaleTimeString()}` : "Loading latest published heat…"}</small></div></header>
-    {error ? <section className={styles.error}><strong>Stats are not published yet.</strong><br />{error}. The `judge-it-stats` GitHub Pages deployment must be enabled before Show IT can display live results.</section> : !rankings ? <p className={styles.loading}>Loading results…</p> : <section className={styles.activity}><h2>Current heat leaderboard</h2>{rankings.rankings.length === 0 ? <p className={styles.muted}>No completed {copy.title.toLowerCase()} attempts logged yet.</p> : <ol className={styles.rows}>{rankings.rankings.map((entry) => <li key={`${entry.rank}-${entry.playerName}`}><span className={styles.rank}>{entry.rank}</span>{entry.imageUrl ? <img className={styles.avatar} src={entry.imageUrl} alt="" /> : <span className={styles.avatar} aria-hidden="true" />}<div><strong>{entry.playerName}</strong><small>{entry.teamName || "Team unavailable"}</small></div><b>{activity === "spin" ? entry.displayRpmLabel : entry.displayLabel}</b></li>)}</ol>}</section>}
-  </main>;
+  const [snapshot, setSnapshot] = useState<Snapshot | null>(null); const [error, setError] = useState<string | null>(null); const request = useRef(0);
+  const source = useMemo(() => statsBaseUrl(process.env.NEXT_PUBLIC_STATS_BASE_URL), []); const copy = details[activity];
+  useEffect(() => { const controller = new AbortController(); const load = async () => { const id = ++request.current; try { const next = await getSnapshot(currentHeatSnapshotPath(source), controller.signal); if (id === request.current) { setSnapshot(next); setError(null); } } catch (cause) { if (!controller.signal.aborted && id === request.current) setError(cause instanceof Error ? cause.message : "Could not load spectator snapshot"); } }; load(); const timer = window.setInterval(load, 60_000); return () => { ++request.current; controller.abort(); window.clearInterval(timer); }; }, [source]);
+  const stale = snapshot ? isStaleSnapshot(snapshot.generatedAt) : false;
+  const active = activity === "beer" || activity === "spin" ? snapshot?.activities[activity] : null;
+  return <main className={styles.main}><nav className={styles.nav} aria-label="Activities"><Link href="/">⚓ Home</Link>{(["beer", "spin", "sail"] as const).map((item) => <Link key={item} href={`/${item === "beer" ? "drink" : item}`} aria-current={item === activity ? "page" : undefined}>{details[item].icon} {details[item].title}</Link>)}</nav><header className={styles.header}><div><p className={styles.kicker}>CAMPUSCUP · PUBLISHED SPECTATOR SNAPSHOT</p><h1>{copy.icon} {copy.title}</h1><p className={styles.description}>{copy.description}</p></div><div className={styles.status}><span>{stale ? "● STALE SNAPSHOT" : "● PUBLISHED SNAPSHOT"}</span><small>{snapshot ? `Heat ${snapshot.currentHeat.number} · generated ${new Date(snapshot.generatedAt).toLocaleTimeString()}` : "Loading…"}</small></div></header>{error && <section className={styles.error}>{snapshot ? `Refresh failed. Showing the last published snapshot. ${error}` : `Snapshot unavailable. ${error}`}</section>}{!snapshot ? <p className={styles.loading}>Waiting for `judge-it-stats/current-heat.json`…</p> : activity === "sail" ? <section className={styles.raceBoard}><h2>Relay race board</h2><div className={styles.raceTeams}>{snapshot.activities.sail.teams.map((team) => <article className={styles.raceTeam} key={team.teamId}><div className={styles.raceHeader}>{team.imageUrl ? <img className={styles.avatar} src={team.imageUrl} alt={`${team.teamName} team`} /> : <span className={styles.avatar} aria-hidden="true"/>}<div><strong>{team.status === "finished" ? "👑 " : ""}{team.teamName}</strong><small>{team.currentPlayerName ? `Current sailor: ${team.currentPlayerName}` : "Awaiting relay start"}</small></div><b>{team.sailLogCount}/16<small>{team.status}</small></b></div><div className={styles.sailTrack} aria-label={`${team.teamName}: ${team.sailLogCount} of 16 sail logs complete`}>{sailSlots(team.sailLogCount).map((complete, index) => <span key={index} className={complete ? styles.sailComplete : styles.sailPending}>{index + 1}</span>)}</div></article>)}</div></section> : <section className={styles.activity}><h2>Completed attempts</h2>{active && active.completed.length ? <ResultRows entries={active.completed} activity={activity} /> : <p className={styles.muted}>No completed attempts in this snapshot.</p>}{active && active.active.length > 0 && <><h2 className={styles.subheading}>In progress when published</h2><ul className={styles.active}>{active.active.map((attempt) => <li key={attempt.playerId}>● {attempt.playerName}{attempt.teamName ? ` · ${attempt.teamName}` : ""}</li>)}</ul></>}</section>}</main>;
 }

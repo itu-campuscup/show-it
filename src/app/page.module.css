@@ -33,4 +33,16 @@
 .loading { max-width:1100px; margin:2rem auto; color:#b8cae0; }
 .avatar { width:2.5rem; height:2.5rem; border-radius:50%; object-fit:cover; background:#315984; }
 .rows li { grid-template-columns:1.6rem 2.5rem 1fr auto; }
-@media (max-width:760px) { .cards { grid-template-columns:1fr; } .rows li { grid-template-columns:1.5rem 2.2rem minmax(0, 1fr) auto; } .rows li b { font-size:.85rem; } }
+.subheading { margin-top:1.5rem !important; }
+.active { list-style:none; margin:0; padding:0; color:#70f0a6; }
+.active li { padding:.65rem 0; border-top:1px solid #24496f; }
+.raceBoard { max-width:1100px; margin:2rem auto; }
+.raceTeams { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1rem; }
+.raceTeam { background:rgba(13,35,70,.86); border:1px solid #315984; border-radius:16px; padding:1rem; }
+.raceHeader { display:grid; grid-template-columns:2.5rem minmax(0, 1fr) auto; gap:.7rem; align-items:center; }
+.raceHeader small, .raceHeader b small { display:block; color:#b8cae0; margin-top:.2rem; }
+.sailTrack { display:grid; grid-template-columns:repeat(8, 1fr); gap:.35rem; margin-top:1rem; }
+.sailTrack span { display:grid; aspect-ratio:1; place-items:center; border-radius:6px; font-size:.75rem; font-weight:bold; }
+.sailComplete { background:#70f0a6; color:#062b1d; }
+.sailPending { border:1px solid #315984; color:#8ca7c5; }
+@media (max-width:760px) { .cards { grid-template-columns:1fr; } .raceTeams { grid-template-columns:1fr; } .rows li { grid-template-columns:1.5rem 2.2rem minmax(0, 1fr) auto; } .rows li b { font-size:.85rem; } }
