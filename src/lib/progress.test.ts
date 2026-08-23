@@ -47,6 +47,19 @@ describe("buildHeatProgress", () => {
     expect(progress.activities.sail.teamNameByTeam).toEqual({ "team-a": "Anchors" });
   });
 
+  test("pairs Beer logs by player when the end log has no team", () => {
+    const progress = buildHeatProgress({
+      ...fixture,
+      timeLogs: [
+        { _id: "start", heat_id: "heat-1", team_id: "team-a", player_id: "player-a", time_type_id: "beer", time: "12:00:00.000" },
+        { _id: "end", heat_id: "heat-1", player_id: "player-a", time_type_id: "beer", time: "12:00:03.000" },
+      ],
+    });
+
+    expect(progress.activities.beer.completed).toMatchObject([{ teamName: "Anchors", durationMs: 3000 }]);
+    expect(progress.activities.beer.activeByTeam).toEqual({});
+  });
+
   test("formats durations for the spectator UI", () => {
     expect(formatDuration(4250)).toBe("4.25s");
     expect(formatDuration(null)).toBe("–");

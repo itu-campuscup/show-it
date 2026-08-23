@@ -62,18 +62,20 @@ export function buildHeatProgress(input: ProgressInput) {
 
   for (const activity of ["beer", "spin"] as const) {
     const typeIds = new Set([...typeById.entries()].filter(([, name]) => name === activity).map(([typeId]) => typeId));
-    const pending = new Map<string, RecordLike & { timestamp: number | null }>();
+    const pending = new Map<string, RecordLike & { timestamp: number }>();
     for (const log of logs.filter((item) => typeIds.has(String(item.time_type_id ?? "")))) {
       const playerId = String(log.player_id ?? "");
-      const key = `${String(log.team_id ?? "")}:${playerId}`;
+      // Judge IT pairs a player's consecutive activity logs within a heat. The
+      // current heat is already scoped above, so team assignment must not split a pair.
+      const key = playerId;
       const start = pending.get(key);
       if (!start) {
         pending.set(key, log);
         activities[activity].activeByTeam[String(log.team_id ?? "")] = players.get(playerId) ?? "Unknown";
         continue;
       }
-      const durationMs = (log.timestamp as number) - (start.timestamp as number);
-      const teamId = String(log.team_id ?? "");
+      const durationMs = log.timestamp - start.timestamp;
+      const teamId = String(start.team_id ?? log.team_id ?? "");
       activities[activity].completed.push({
         playerName: players.get(playerId) ?? "Unknown",
         teamName: teams.get(teamId) ?? "Unknown team",
