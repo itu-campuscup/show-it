@@ -1,6 +1,8 @@
 # Show IT ⚓
 
-A mobile-first, static CampusCup spectator frontend. It never calls Judge IT, Convex, or the authenticated `/stats` endpoint from a browser.
+A mobile-first CampusCup spectator frontend, intended for **https://show.campuscup.dk** on Vercel.
+
+It never calls Judge IT, Convex, or the authenticated `/stats` endpoint from a browser.
 
 ## Routes
 
@@ -11,7 +13,7 @@ A mobile-first, static CampusCup spectator frontend. It never calls Judge IT, Co
 ## Architecture
 
 ```text
-Convex schema → authenticated judge-it-stats generator → public GitHub Pages JSON → Show IT GitHub Pages → spectators
+Convex schema → authenticated judge-it-stats generator → public static JSON → Vercel CDN → spectators
 ```
 
 The static projection protects Judge IT from spectator traffic. A snapshot is not real-time. The UI shows its publication timestamp and marks it stale after seven minutes.
@@ -36,11 +38,13 @@ The versioned contract and relay rules are documented in [`docs/current-heat-sna
 
 Override the source for local/staging work with `NEXT_PUBLIC_STATS_BASE_URL`.
 
-## Deployment gates
+## Deploy to Vercel
 
-1. Enable Pages with **Source: GitHub Actions** in `itu-campuscup/judge-it-stats` and repair/run its generator until `current-heat.json` returns public JSON.
-2. Enable Pages with **Source: GitHub Actions** in this repository.
-3. The included deployment workflow builds with `NEXT_PUBLIC_BASE_PATH=/show-it`, so assets and direct routes work under `https://lucasfth.github.io/show-it/`.
+1. Import `lucasfth/show-it` into the appropriate Vercel team.
+2. Set production branch to `main`.
+3. Add the domain **`show.campuscup.dk`** to the project.
+4. Apply the DNS record Vercel presents for that hostname. It is normally a CNAME to `cname.vercel-dns.com`.
+5. Vercel detects `vercel.json`, runs `bun run build`, and serves the static `out/` export at the subdomain root. No GitHub Pages base path is used.
 
 ## Local development
 
@@ -53,5 +57,5 @@ bun dev
 On Android/Termux, build with Webpack:
 
 ```bash
-NEXT_PUBLIC_BASE_PATH=/show-it node node_modules/next/dist/bin/next build --webpack
+node node_modules/next/dist/bin/next build --webpack
 ```
