@@ -13,18 +13,24 @@ const snapshot: Snapshot = {
   activities: {
     beer: { completed: [{ id: "beer-1", rank: 1, playerName: "Ada", teamName: "Anchors", durationMs: 4250, formattedTime: "00:04:250", displayLabel: "00:04:250" }], active: [], attemptsStarted: 1, attemptsCompleted: 1 },
     spin: { completed: [], active: [], attemptsStarted: 0, attemptsCompleted: 0 },
-    sail: { teams: [{ teamId: "team-1", teamName: "Anchors", sailLogCount: 4, handoffCount: 1, completedLegCount: 1, status: "racing", currentPlayerName: "Ada", startedAt: "2026-05-17T12:00:00.000Z", elapsedMsAtSnapshot: 300000 }] },
+    sail: { teams: [
+      { teamId: "team-1", teamName: "Anchors", sailLogCount: 13, handoffCount: 6, completedLegCount: 6, status: "racing", currentPlayerName: "Ada", startedAt: "2026-05-17T12:00:00.000Z", elapsedMsAtSnapshot: 300000 },
+      { teamId: "team-2", teamName: "Rivals", sailLogCount: 16, handoffCount: 7, completedLegCount: 7, status: "finished", currentPlayerName: "Ben", startedAt: "2026-05-17T12:00:00.000Z", elapsedMsAtSnapshot: 240000, finishedAt: "2026-05-17T12:04:00.000Z" },
+    ] },
   },
 };
 
 describe("HeatDashboard rendering", () => {
-  test("shows current heat, source time, exact activity, summaries, and links", () => {
+  test("shows the Judge IT current-heat matchup and activity links", () => {
     const markup = renderToStaticMarkup(<HeatDashboard initialSnapshot={snapshot} />);
     expect(markup).toContain("Heat 4");
-    expect(markup).toContain("Source updated");
-    expect(markup).toContain("Drink");
-    expect(markup).toContain("Drink completed");
-    expect(markup).toContain('href="/sail"');
+    expect(markup).toContain("Anchors");
+    expect(markup).toContain("Current sailor: Ada");
+    expect(markup).toContain("Rivals");
+    expect(markup).toContain("Winner");
+    expect(markup).toContain("04:00");
+    expect(markup).not.toContain("Drink completed");
+    expect(markup).toContain('href="/teams"');
   });
 
   test("uses unavailable copy when no snapshot exists", () => {
@@ -32,7 +38,7 @@ describe("HeatDashboard rendering", () => {
     expect(markup).toContain("Current heat unavailable");
     expect(markup).toContain("Snapshot unavailable");
     expect(markup).toContain("Feed unavailable");
-    expect(markup).toContain("The current activity is unavailable.");
+    expect(markup).toContain("Current heat data is unavailable.");
   });
 });
 

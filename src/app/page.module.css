@@ -31,8 +31,7 @@
 .nav a[aria-current="page"]:hover { background: #fff; }
 .nav a:focus-visible,
 .linkList a:focus-visible,
-.card:focus-visible,
-.summaryCard:focus-visible { outline: 3px solid #ffd166; outline-offset: 3px; }
+.card:focus-visible { outline: 3px solid #ffd166; outline-offset: 3px; }
 .header {
   display: grid;
   gap: 1.25rem;
@@ -75,8 +74,7 @@
 .heatContext,
 .activity,
 .raceBoard,
-.linkPanel,
-.summaryCard {
+.linkPanel {
   border: 1px solid #d8e3f3;
   border-radius: 1rem;
   background: #fff;
@@ -91,24 +89,6 @@
 .currentActivity p,
 .sectionHeading p,
 .linkPanel p { margin: .45rem 0 0; color: #536887; }
-.summary {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: .75rem;
-  margin: 0 0 1rem;
-}
-.summaryCard {
-  display: grid;
-  gap: .35rem;
-  min-height: 44px;
-  padding: 1rem;
-  color: #12254c;
-  text-decoration: none;
-}
-.summaryCard:hover { border-color: #224186; }
-.summaryCard span { color: #536887; font-size: .85rem; font-weight: 800; }
-.summaryCard strong { font-size: 1.65rem; font-variant-numeric: tabular-nums; }
-.summaryCard small { color: #224186; font-weight: 700; }
 .linkPanel { padding: 1.2rem; margin: 0 0 1rem; }
 .linkPanel h2 { margin: 0; font-size: 1.25rem; }
 .linkList { display: grid; gap: .65rem; margin-top: .9rem; }
@@ -166,11 +146,72 @@
 .winner { color: #8b5b00; }
 .error { padding: 1rem; border: 1px solid #ffcf66; border-radius: .7rem; background: #fff7df; color: #4d3700; }
 .loading { color: #edf4ff; }
+.heatMatchup {
+  margin: 0 0 1rem;
+  border: 1px solid #d8e3f3;
+  border-radius: 1rem;
+  padding: 1rem;
+  background: #fff;
+  color: #12254c;
+  box-shadow: 0 10px 24px rgba(5, 19, 54, .16);
+}
+.matchupGrid {
+  display: grid;
+  grid-template-areas: "timer timer" "team-one team-two";
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: center;
+}
+.matchupTeam { display: grid; justify-items: center; align-content: start; text-align: center; min-width: 0; }
+.matchupTeam:nth-child(1) { grid-area: team-one; }
+.matchupTeam:nth-child(2) { grid-area: team-two; }
+.matchupTeam h2 { margin: .75rem 0 .25rem; font-size: clamp(1rem, 4vw, 1.55rem); overflow-wrap: anywhere; }
+.matchupTeam p { margin: 0; color: #536887; font-size: .85rem; }
+.matchupAvatar { width: clamp(4.5rem, 18vw, 8rem); height: clamp(4.5rem, 18vw, 8rem); border-radius: 50%; object-fit: cover; background: #d8e3f3; }
+.winnerBadge { min-height: 1.5rem; margin-bottom: .4rem; border-radius: 999px; padding: .25rem .65rem; background: #fff0bd; color: #775000; font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; }
+.matchupTimer { grid-area: timer; display: grid; justify-items: center; }
+.matchupTimer strong { font-size: clamp(2.3rem, 12vw, 4rem); line-height: 1; font-variant-numeric: tabular-nums; }
+.matchupTimer span { margin-top: .4rem; color: #536887; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+.comparisonPanel {
+  border: 1px solid #d8e3f3;
+  border-radius: 1rem;
+  padding: 1rem;
+  background: #fff;
+  color: #12254c;
+  box-shadow: 0 10px 24px rgba(5, 19, 54, .16);
+}
+.teamSelectors { display: grid; gap: .8rem; margin-bottom: 1rem; }
+.teamSelectors label { display: grid; gap: .4rem; color: #536887; font-size: .85rem; font-weight: 800; }
+.teamSelectors select {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #9db0cf;
+  border-radius: .65rem;
+  padding: .65rem .8rem;
+  background: #f8fbff;
+  color: #12254c;
+  font: inherit;
+}
+.teamSelectors select:focus-visible { outline: 3px solid #ffd166; outline-offset: 2px; }
+.radarWrap { width: min(100%, 700px); margin: 0 auto; }
+.radar { display: block; width: 100%; height: auto; }
+.radarGrid { fill: rgba(34, 65, 134, .04); stroke: #b9c7dd; stroke-width: 1; }
+.radarAxis { stroke: #b9c7dd; stroke-width: 1; }
+.radarTeamOne { fill: rgba(34, 65, 134, .24); stroke: #224186; stroke-width: 3; }
+.radarTeamTwo { fill: rgba(208, 93, 66, .22); stroke: #d05d42; stroke-width: 3; }
+.radarLabel { fill: #12254c; font-size: 16px; font-weight: 800; }
+.radarLegend { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-top: -.5rem; font-weight: 700; }
+.radarLegend span { display: inline-flex; align-items: center; gap: .4rem; }
+.radarLegend i { width: .85rem; height: .85rem; border-radius: 50%; }
+.teamOneSwatch { background: #224186; }
+.teamTwoSwatch { background: #d05d42; }
+.scaleNote { margin: 1rem 0 0; color: #536887; font-size: .85rem; line-height: 1.5; text-align: center; }
 @media (min-width: 700px) {
   .main { padding: 2rem clamp(1.5rem, 4vw, 3rem); }
   .header { grid-template-columns: minmax(0, 1fr) auto; }
   .status { text-align: right; }
-  .summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .linkList { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .raceTeams { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .teamSelectors { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .matchupGrid { grid-template-areas: "team-one timer team-two"; grid-template-columns: minmax(0, 1fr) minmax(10rem, .7fr) minmax(0, 1fr); }
+  .linkList { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
