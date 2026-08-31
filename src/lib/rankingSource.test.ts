@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { fetchLatestRanking } from "./rankingSource";
+import { fetchRanking } from "./rankingSource";
 
 const originalFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = originalFetch; });
@@ -23,25 +23,26 @@ const spinRanking = {
 };
 
 describe("published year ranking source", () => {
-  test("loads the latest year and maps publisher durations", async () => {
+  test("loads the requested year and maps publisher durations", async () => {
     const calls: string[] = [];
     globalThis.fetch = async (input) => {
       calls.push(String(input));
-      return new Response(JSON.stringify(calls.length === 1 ? { years: [2024, 2025] } : spinRanking));
+      return new Response(JSON.stringify(spinRanking));
     };
 
-    const ranking = await fetchLatestRanking("spin", "https://stats.example/");
+    const ranking = await fetchRanking("spin", 2025, "https://stats.example/");
 
-    expect(calls).toEqual([
-      "https://stats.example/index.json",
-      "https://stats.example/rankings/2025/spin.json",
-    ]);
+    expect(calls).toEqual(["https://stats.example/rankings/2025/spin.json"]);
     expect(ranking.entries[0]).toMatchObject({ playerName: "Noah Wagenen", durationMs: 5906, heatNumber: 7 });
   });
 
   test("rejects a ranking for a different activity", async () => {
-    let call = 0;
-    globalThis.fetch = async () => new Response(JSON.stringify(call++ === 0 ? { years: [2025] } : { ...spinRanking, timeType: "Sail" }));
-    await expect(fetchLatestRanking("spin")).rejects.toThrow("did not match");
+    globalThis.fetch = async () => new Response(JSON.stringify({ ...spinRanking, timeType: "Sail" }));
+    await expect(fetchRanking("spin", 2025)).rejects.toThrow("did not match");
+  });
+
+  test("rejects a ranking for a different year", async () => {
+    globalThis.fetch = async () => new Response(JSON.stringify({ ...spinRanking, year: 2024 }));
+    await expect(fetchRanking("spin", 2025)).rejects.toThrow("did not match");
   });
 });
