@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { Snapshot } from "@/lib/snapshot";
+import type { Ranking } from "@/lib/ranking";
 import { ActivityPresentation } from "./ActivityPresentation";
 import { HeatDashboard } from "./HeatDashboard";
 
@@ -36,21 +37,35 @@ describe("HeatDashboard rendering", () => {
 });
 
 describe("ActivityPresentation rendering", () => {
-  test("renders explicit no-data state for empty activity results", () => {
-    const markup = renderToStaticMarkup(<ActivityPresentation activity="spin" snapshot={snapshot} />);
-    expect(markup).toContain("No completed results in this snapshot.");
-    expect(markup).toContain("No current attempts in this snapshot.");
+  const ranking = (activity: Ranking["activity"], entries: Ranking["entries"]): Ranking => ({
+    activity,
+    year: 2025,
+    generatedAt: "2026-08-31T15:53:35.647Z",
+    entries,
   });
 
-  test("keeps Sail spectator-safe and names current sailor or winner", () => {
-    const racing = renderToStaticMarkup(<ActivityPresentation activity="sail" snapshot={snapshot} />);
-    expect(racing).toContain("Current sailor: Ada");
-    expect(racing).toContain("Racing");
-    expect(racing).not.toContain("4/16");
+  test("renders explicit no-data state for an empty year ranking", () => {
+    const markup = renderToStaticMarkup(<ActivityPresentation activity="spin" ranking={ranking("spin", [])} />);
+    expect(markup).toContain("No ranked results for 2025.");
+  });
 
-    const finishedSnapshot = { ...snapshot, activities: { ...snapshot.activities, sail: { teams: [{ ...snapshot.activities.sail.teams[0], status: "finished" as const, currentPlayerName: undefined, finishedAt: "2026-05-17T12:05:00.000Z" }] } } };
-    const finished = renderToStaticMarkup(<ActivityPresentation activity="sail" snapshot={finishedSnapshot} />);
-    expect(finished).toContain("Finished winner");
-    expect(finished).not.toContain("Current sailor:");
+  test("renders the published year-wide Spin ranking", () => {
+    const markup = renderToStaticMarkup(<ActivityPresentation activity="spin" ranking={ranking("spin", [{
+      rank: 1, playerId: "p1", playerName: "Noah Wagenen", teamName: "Mændfrøskorpset", heatNumber: 7,
+      durationMs: 5906, formattedTime: "00:05:905", displayLabel: "102 RPM", rpm: 101.59, displayRpmLabel: "102 RPM",
+    }])} />);
+    expect(markup).toContain("Noah Wagenen");
+    expect(markup).toContain("Heat 7");
+    expect(markup).toContain("102 RPM");
+  });
+
+  test("renders Sail as a year-wide time ranking", () => {
+    const markup = renderToStaticMarkup(<ActivityPresentation activity="sail" ranking={ranking("sail", [{
+      rank: 1, playerId: "p1", playerName: "Matteo Guglielmi", teamName: "Hellige Firenighed", heatNumber: 1,
+      durationMs: 10334, formattedTime: "00:10:333", displayLabel: "00:10:333",
+    }])} />);
+    expect(markup).toContain("Matteo Guglielmi");
+    expect(markup).toContain("00:10:333");
+    expect(markup).not.toContain("Racing");
   });
 });

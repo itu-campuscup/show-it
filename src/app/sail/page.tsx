@@ -1,10 +1,10 @@
 import { SpectatorPage } from "@/components/SpectatorPage";
-import { fetchCurrentHeatSnapshot } from "@/lib/snapshotSource";
+import { fetchLatestRanking } from "@/lib/rankingSource";
 
 export default async function SailPage() {
   try {
-    return <SpectatorPage activity="sail" initialSnapshot={await fetchCurrentHeatSnapshot()} />;
+    return <SpectatorPage activity="sail" initialRanking={await fetchLatestRanking("sail")} />;
   } catch (error) {
-    return <SpectatorPage activity="sail" initialSnapshot={null} initialError={error instanceof Error ? error.message : "Could not load spectator snapshot"} />;
+    return <SpectatorPage activity="sail" initialRanking={null} initialError={error instanceof Error ? error.message : "Could not load rankings"} />;
   }
 }

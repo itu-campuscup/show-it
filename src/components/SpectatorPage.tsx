@@ -1,7 +1,7 @@
 import { SpectatorBoard } from "@/components/SpectatorBoard";
-import type { Snapshot } from "@/lib/snapshot";
+import type { Ranking } from "@/lib/ranking";
 import type { Activity } from "@/lib/stats";
 
-export function SpectatorPage({ activity, initialSnapshot, initialError }: { activity: Activity; initialSnapshot: Snapshot | null; initialError?: string | null }) {
-  return <SpectatorBoard activity={activity} initialSnapshot={initialSnapshot} initialError={initialError} />;
+export function SpectatorPage({ activity, initialRanking, initialError }: { activity: Activity; initialRanking: Ranking | null; initialError?: string | null }) {
+  return <SpectatorBoard activity={activity} initialRanking={initialRanking} initialError={initialError} />;
 }

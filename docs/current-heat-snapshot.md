@@ -1,6 +1,6 @@
 # Current heat snapshot contract
 
-`judge-it-stats` must publish `current-heat.json` atomically after fetching the authenticated schema-backed `/stats` feed. Show IT consumes this public projection only. It must never use the Convex URL or `STATS_API_KEY`.
+`judge-it-stats` publishes `current-heat.json` atomically after fetching the authenticated schema-backed `/stats` feed. The Show IT home page consumes this projection; ranking pages use the separate year-wide ranking files. Show IT must never use the Convex URL or `STATS_API_KEY`.
 
 ```ts
 {

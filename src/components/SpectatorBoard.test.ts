@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { createSnapshotRefresh, type SnapshotRefreshOptions } from "./SpectatorBoard";
-import type { Snapshot } from "@/lib/snapshot";
+import { createRankingRefresh, type RankingRefreshOptions } from "./SpectatorBoard";
+import type { Ranking } from "@/lib/ranking";
 
-const snapshot = (generatedAt: string): Snapshot => ({ generatedAt } as Snapshot);
+const ranking = (generatedAt: string): Ranking => ({ activity: "spin", year: 2025, generatedAt, entries: [] });
 const originalSetInterval = globalThis.setInterval;
 const originalClearInterval = globalThis.clearInterval;
 
@@ -11,20 +11,20 @@ afterEach(() => {
   globalThis.clearInterval = originalClearInterval;
 });
 
-function refreshOptions(overrides: Partial<SnapshotRefreshOptions>): SnapshotRefreshOptions {
+function refreshOptions(overrides: Partial<RankingRefreshOptions>): RankingRefreshOptions {
   return {
-    initialSnapshot: snapshot("2026-05-17T12:00:00.000Z"),
-    load: async () => snapshot("2026-05-17T12:01:00.000Z"),
-    onSnapshot: () => {},
+    initialRanking: ranking("2026-05-17T12:00:00.000Z"),
+    load: async () => ranking("2026-05-17T12:01:00.000Z"),
+    onRanking: () => {},
     onError: () => {},
     ...overrides,
   };
 }
 
-describe("spectator snapshot refresh boundary", () => {
-  test("replaces the initial snapshot only with a newer valid snapshot", async () => {
-    const received: Snapshot[] = [];
-    const refresh = createSnapshotRefresh(refreshOptions({ onSnapshot: (next) => received.push(next) }));
+describe("published ranking refresh boundary", () => {
+  test("replaces the initial ranking only with a newer valid ranking", async () => {
+    const received: Ranking[] = [];
+    const refresh = createRankingRefresh(refreshOptions({ onRanking: (next) => received.push(next) }));
 
     await refresh.refresh();
 
@@ -32,17 +32,17 @@ describe("spectator snapshot refresh boundary", () => {
     refresh.dispose();
   });
 
-  test("preserves the initial snapshot when refresh is invalid or fails", async () => {
-    const received: Snapshot[] = [];
+  test("preserves the initial ranking when refresh is invalid or fails", async () => {
+    const received: Ranking[] = [];
     const errors: unknown[] = [];
     let attempt = 0;
-    const refresh = createSnapshotRefresh(refreshOptions({
+    const refresh = createRankingRefresh(refreshOptions({
       load: async () => {
         attempt += 1;
-        if (attempt === 1) return snapshot("not-a-timestamp");
+        if (attempt === 1) return ranking("not-a-timestamp");
         throw new Error("source unavailable");
       },
-      onSnapshot: (next) => received.push(next),
+      onRanking: (next) => received.push(next),
       onError: (error) => errors.push(error),
     }));
 
@@ -59,8 +59,8 @@ describe("spectator snapshot refresh boundary", () => {
     let intervalCallback: (() => void) | undefined;
     let cleared: number | undefined;
     let signal: AbortSignal | undefined;
-    const pending = new Promise<Snapshot>(() => {});
-    const refresh = createSnapshotRefresh(refreshOptions({
+    const pending = new Promise<Ranking>(() => {});
+    const refresh = createRankingRefresh(refreshOptions({
       load: (nextSignal) => { signal = nextSignal; return pending; },
       setInterval: (callback) => { intervalCallback = callback; return 42; },
       clearInterval: (id) => { cleared = id; },
