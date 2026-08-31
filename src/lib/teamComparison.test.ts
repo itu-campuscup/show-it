@@ -30,15 +30,15 @@ describe("public team comparison source", () => {
       return new Response(JSON.stringify(index));
     };
 
-    const result = await fetchTeamComparison("https://stats.example/");
+    const result = await fetchTeamComparison(2025, "https://stats.example/");
 
-    expect(calls).toEqual(["https://stats.example/teams/index.json"]);
+    expect(calls).toEqual(["https://stats.example/teams/2025/index.json"]);
     expect(result.teams[0]?.teamName).toBe("Anchors");
     expect(result.teams[0]?.radarData[0]).toEqual({ subject: "Beer", performance: 93, fullMark: 100 });
   });
 
   test("rejects malformed radar values", async () => {
     globalThis.fetch = async () => new Response(JSON.stringify({ ...index, teams: [{ ...index.teams[0], radarData: [{ subject: "Beer", performance: 101, fullMark: 100 }] }] }));
-    await expect(fetchTeamComparison()).rejects.toThrow("Unsupported team comparison");
+    await expect(fetchTeamComparison(2025)).rejects.toThrow("Unsupported team comparison");
   });
 });

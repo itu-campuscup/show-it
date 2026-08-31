@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { fetchLatestRanking } from "@/lib/rankingSource";
+import { fetchRanking } from "@/lib/rankingSource";
 import type { Ranking } from "@/lib/ranking";
 import { isStaleSnapshot } from "@/lib/snapshot";
 import type { Activity } from "@/lib/stats";
 import { ActivityPresentation, activityLabels } from "./ActivityPresentation";
+import { YearSelector } from "./YearSelector";
 import { ActivityNav, formatSnapshotTime } from "./HeatDashboard";
 import styles from "@/app/page.module.css";
 
@@ -69,23 +70,38 @@ function RankingStatus({ ranking, error, stale }: { ranking: Ranking | null; err
   return <div className={styles.status} role="status" aria-live="polite"><strong>{label}</strong><small>{ranking ? <>Updated {formatSnapshotTime(ranking.generatedAt)}{error ? ` · Refresh unavailable: ${error}` : ""}</> : error || "No ranking data is available right now."}</small></div>;
 }
 
-export function SpectatorBoard({ activity, initialRanking, initialError }: { activity: Activity; initialRanking: Ranking | null; initialError?: string | null }) {
-  const [ranking, setRanking] = useState<Ranking | null>(initialRanking);
+export type SpectatorBoardProps = {
+  activity: Activity;
+  initialRanking: Ranking | null;
+  availableYears: readonly number[];
+  selectedYear: number;
+  initialError?: string | null;
+};
+
+export function SpectatorBoard({ activity, initialRanking, availableYears, selectedYear, initialError }: SpectatorBoardProps) {
+  const startingRanking = initialRanking?.year === selectedYear ? initialRanking : null;
+  const [ranking, setRanking] = useState<Ranking | null>(startingRanking);
   const [error, setError] = useState<string | null>(initialError ?? null);
-  const source = useMemo(() => ({ load: (signal: AbortSignal) => fetchLatestRanking(activity, undefined, signal) }), [activity]);
+  const source = useMemo(() => ({ load: (signal: AbortSignal) => fetchRanking(activity, selectedYear, undefined, signal) }), [activity, selectedYear]);
 
   useEffect(() => {
+    setRanking(startingRanking);
+    setError(initialError ?? null);
     const refresh = createRankingRefresh({
-      initialRanking,
+      initialRanking: startingRanking,
       load: source.load,
-      onRanking: (next) => { setRanking(next); setError(null); },
+      onRanking: (next) => {
+        if (next.year !== selectedYear) return;
+        setRanking(next);
+        setError(null);
+      },
       onError: (cause) => setError(cause instanceof Error ? cause.message : "Could not load rankings"),
     });
     void refresh.refresh();
     return refresh.dispose;
-  }, [initialRanking, source]);
+  }, [initialError, selectedYear, source, source.load, startingRanking]);
 
-  const stale = ranking ? isStaleSnapshot(ranking.generatedAt) : false;
-  const year = ranking?.year;
-  return <main className={styles.main}><div className={styles.shell}><ActivityNav current={activity} /><header className={styles.header}><div><p className={styles.kicker}>CAMPUSCUP · PUBLISHED RANKINGS</p><h1>{activityLabels[activity]}</h1><p className={styles.description}>{year ? `${year} rankings across all heats.` : "Rankings across all heats."}</p></div><RankingStatus ranking={ranking} error={error} stale={stale} /></header><ActivityPresentation activity={activity} ranking={ranking} /></div></main>;
+  const visibleRanking = ranking?.year === selectedYear ? ranking : startingRanking;
+  const stale = visibleRanking ? isStaleSnapshot(visibleRanking.generatedAt) : false;
+  return <main className={styles.main}><div className={styles.shell}><ActivityNav current={activity} /><header className={styles.header}><div><p className={styles.kicker}>CAMPUSCUP · PUBLISHED RANKINGS</p><h1>{activityLabels[activity]}</h1><p className={styles.description}>{selectedYear} rankings across all heats.</p><YearSelector key={selectedYear} availableYears={availableYears} selectedYear={selectedYear} /></div><RankingStatus ranking={visibleRanking} error={error} stale={stale} /></header><ActivityPresentation activity={activity} ranking={visibleRanking} /></div></main>;
 }

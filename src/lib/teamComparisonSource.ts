@@ -1,10 +1,12 @@
 import { parseTeamComparison, type TeamComparison } from "./teamComparison";
 import { statsBaseUrl } from "./stats";
 
-export async function fetchTeamComparison(baseUrl = process.env.NEXT_PUBLIC_STATS_BASE_URL, signal?: AbortSignal): Promise<TeamComparison> {
+export async function fetchTeamComparison(year: number, baseUrl = process.env.NEXT_PUBLIC_STATS_BASE_URL, signal?: AbortSignal): Promise<TeamComparison> {
+  if (!Number.isSafeInteger(year) || year <= 0) throw new Error("Team comparison requested invalid year");
+
   const init: RequestInit = { cache: "no-store", credentials: "omit" };
   if (signal) init.signal = signal;
-  const response = await fetch(`${statsBaseUrl(baseUrl)}/teams/index.json`, init);
+  const response = await fetch(`${statsBaseUrl(baseUrl)}/teams/${year}/index.json`, init);
   if (!response.ok) throw new Error(`Team comparison returned ${response.status}`);
   try {
     return parseTeamComparison(await response.json());
