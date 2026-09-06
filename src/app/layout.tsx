@@ -7,5 +7,20 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body>{children}</body></html>;
+  return (
+    <html lang="en">
+      <body>
+        {children}
+        <footer className="site-footer">
+          <p>
+            Interested in how Show IT works?{" "}
+            <a href="https://github.com/itu-campuscup/show-it" target="_blank" rel="noreferrer">
+              View the source on GitHub
+            </a>
+            .
+          </p>
+        </footer>
+      </body>
+    </html>
+  );
 }
