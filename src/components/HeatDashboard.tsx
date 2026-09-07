@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { fetchCurrentHeatSnapshot } from "@/lib/snapshotSource";
 import type { Snapshot } from "@/lib/snapshot";
 import type { Activity } from "@/lib/stats";
 import { activityLabels } from "./ActivityPresentation";
@@ -12,6 +13,77 @@ export const activityLinks: Array<{ activity: Activity; href: string }> = [
   { activity: "spin", href: "/spin" },
   { activity: "sail", href: "/sail" },
 ];
+export const SNAPSHOT_REFRESH_INTERVAL_MS = 60_000;
+
+type SnapshotLoader = (signal: AbortSignal) => Promise<Snapshot>;
+export type SnapshotRefreshTimer = number;
+export type SnapshotRefreshOptions = {
+  initialSnapshot: Snapshot | null;
+  load: SnapshotLoader;
+  onSnapshot: (snapshot: Snapshot) => void;
+  onError: (error: unknown) => void;
+  setInterval?: (callback: () => void, delay: number) => SnapshotRefreshTimer;
+  clearInterval?: (timer: SnapshotRefreshTimer) => void;
+};
+
+export function createSnapshotRefresh(options: SnapshotRefreshOptions) {
+  let current = options.initialSnapshot;
+  let disposed = false;
+  let requestController: AbortController | undefined;
+  const setInterval = options.setInterval ?? globalThis.setInterval;
+  const clearInterval = options.clearInterval ?? globalThis.clearInterval;
+
+  const refresh = async (): Promise<void> => {
+    if (disposed) return;
+    requestController?.abort();
+    const controller = new AbortController();
+    requestController = controller;
+    try {
+      const next = await options.load(controller.signal);
+      if (disposed || controller.signal.aborted || requestController !== controller)
+        return;
+
+      const currentTime = current
+        ? Date.parse(current.generatedAt)
+        : Number.NEGATIVE_INFINITY;
+      const nextTime = Date.parse(next.generatedAt);
+      if (Number.isFinite(nextTime) && nextTime > currentTime) {
+        current = next;
+        options.onSnapshot(next);
+      }
+    } catch (error) {
+      if (
+        !disposed &&
+        !controller.signal.aborted &&
+        requestController === controller
+      )
+        options.onError(error);
+    } finally {
+      if (requestController === controller) requestController = undefined;
+    }
+  };
+
+  const timer = setInterval(
+    () => {
+      void refresh();
+    },
+    SNAPSHOT_REFRESH_INTERVAL_MS,
+  );
+  return {
+    refresh,
+    dispose: () => {
+      if (disposed) return;
+      disposed = true;
+      requestController?.abort();
+      requestController = undefined;
+      clearInterval(timer);
+    },
+    get current() {
+      return current;
+    },
+  };
+}
+
 
 export function formatSnapshotTime(timestamp: string): string {
   const date = new Date(timestamp);
@@ -67,7 +139,67 @@ function CurrentHeatMatchup({ snapshot }: { snapshot: Snapshot | null }) {
   })}<div className={styles.matchupTimer}><strong>{formatRaceTime(elapsed)}</strong><span>{winner ? "Final time" : "Race time"}</span></div></div></section>;
 }
 
-export function HeatDashboard({ initialSnapshot, initialError }: { initialSnapshot: Snapshot | null; initialError?: string | null }) {
-  const snapshot = initialSnapshot;
-  return <main className={styles.main}><div className={styles.shell}><ActivityNav /><header className={styles.header}><div><p className={styles.kicker}>CAMPUSCUP · CURRENT HEAT</p><h1>{heatName(snapshot)}</h1><p className={styles.description}>Live race status from the published Judge IT snapshot.</p></div><SnapshotStatus snapshot={snapshot} error={initialError} /></header><CurrentHeatMatchup snapshot={snapshot} /><section className={styles.linkPanel} aria-labelledby="views-heading"><h2 id="views-heading">Explore CampusCup</h2><div className={styles.linkList}>{activityLinks.map(({ activity, href }) => <Link key={activity} href={href}>{activityLabels[activity]} rankings <span aria-hidden="true">→</span></Link>)}<Link href="/teams">Team comparison <span aria-hidden="true">→</span></Link></div></section></div></main>;
+export function HeatDashboard({
+  initialSnapshot,
+  initialError,
+}: {
+  initialSnapshot: Snapshot | null;
+  initialError?: string | null;
+}) {
+  const [snapshot, setSnapshot] = useState(initialSnapshot);
+  const [error, setError] = useState<string | null>(initialError ?? null);
+
+  useEffect(() => {
+    setSnapshot(initialSnapshot);
+    setError(initialError ?? null);
+    const refresh = createSnapshotRefresh({
+      initialSnapshot,
+      load: (signal) => fetchCurrentHeatSnapshot(undefined, signal),
+      onSnapshot: (next) => {
+        setSnapshot(next);
+        setError(null);
+      },
+      onError: (cause) =>
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : "Could not refresh current heat",
+        ),
+    });
+    void refresh.refresh();
+    return refresh.dispose;
+  }, [initialError, initialSnapshot]);
+
+  return (
+    <main className={styles.main}>
+      <div className={styles.shell}>
+        <ActivityNav />
+        <header className={styles.header}>
+          <div>
+            <p className={styles.kicker}>CAMPUSCUP · CURRENT HEAT</p>
+            <h1>{heatName(snapshot)}</h1>
+            <p className={styles.description}>
+              Live race status from the published Judge IT snapshot.
+            </p>
+          </div>
+          <SnapshotStatus snapshot={snapshot} error={error} />
+        </header>
+        <CurrentHeatMatchup snapshot={snapshot} />
+        <section className={styles.linkPanel} aria-labelledby="views-heading">
+          <h2 id="views-heading">Explore CampusCup</h2>
+          <div className={styles.linkList}>
+            {activityLinks.map(({ activity, href }) => (
+              <Link key={activity} href={href}>
+                {activityLabels[activity]} rankings{" "}
+                <span aria-hidden="true">→</span>
+              </Link>
+            ))}
+            <Link href="/teams">
+              Team comparison <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
 }

@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import type { Snapshot } from "@/lib/snapshot";
 import type { Ranking } from "@/lib/ranking";
 import { ActivityPresentation } from "./ActivityPresentation";
-import { HeatDashboard } from "./HeatDashboard";
+import { createSnapshotRefresh, HeatDashboard } from "./HeatDashboard";
 
 const snapshot: Snapshot = {
   schemaVersion: 1,
@@ -41,6 +41,30 @@ describe("HeatDashboard rendering", () => {
     expect(markup).toContain("Current heat data is unavailable.");
   });
 });
+describe("current heat refresh boundary", () => {
+  test("replaces the initial snapshot only when a newer publication arrives", async () => {
+    const received: Snapshot[] = [];
+    const refresh = createSnapshotRefresh({
+      initialSnapshot: snapshot,
+      load: async () => ({
+        ...snapshot,
+        generatedAt: "2026-05-17T12:06:00.000Z",
+      }),
+      onSnapshot: (next) => received.push(next),
+      onError: () => {},
+      setInterval: () => 1,
+      clearInterval: () => {},
+    });
+
+    await refresh.refresh();
+
+    expect(received.map((item) => item.generatedAt)).toEqual([
+      "2026-05-17T12:06:00.000Z",
+    ]);
+    refresh.dispose();
+  });
+});
+
 
 describe("ActivityPresentation rendering", () => {
   const ranking = (activity: Ranking["activity"], entries: Ranking["entries"]): Ranking => ({
