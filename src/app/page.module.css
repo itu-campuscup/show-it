@@ -172,6 +172,43 @@
 .matchupTimer { grid-area: timer; display: grid; justify-items: center; }
 .matchupTimer strong { font-size: clamp(2.3rem, 12vw, 4rem); line-height: 1; font-variant-numeric: tabular-nums; }
 .matchupTimer span { margin-top: .4rem; color: #536887; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+.championGrid {
+  display: grid;
+  gap: 1rem;
+}
+.championCard {
+  display: grid;
+  justify-items: center;
+  gap: .45rem;
+  border: 1px solid #d8e3f3;
+  border-top: 4px solid #224186;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  background: #fff;
+  color: #12254c;
+  text-align: center;
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(5, 19, 54, .16);
+}
+.championCard:hover { border-top-color: #d05d42; }
+.championCard:focus-visible { outline: 3px solid #ffd166; outline-offset: 3px; }
+.championCard p { margin: 0; color: #536887; font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.championCard h2 { margin: 0; font-size: clamp(1.15rem, 4vw, 1.5rem); overflow-wrap: anywhere; }
+.championCard small { color: #536887; }
+.championCard strong { margin-top: .35rem; color: #224186; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.championCard span:last-child { margin-top: .35rem; color: #224186; font-size: .85rem; font-weight: 800; }
+.championAvatar {
+  display: grid;
+  place-items: center;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  background: #d8e3f3;
+  color: #12254c;
+  font-size: 1.4rem;
+  font-weight: 900;
+  object-fit: cover;
+}
 .comparisonPanel {
   border: 1px solid #d8e3f3;
   border-radius: 1rem;
@@ -232,6 +269,7 @@
 .teamPreviewCard p { margin: 0; color: #536887; font-size: .85rem; font-weight: 800; }
 .teamPreviewCard ul { grid-column: 2; display: flex; flex-wrap: wrap; gap: .25rem .6rem; margin: .25rem 0 0; padding: 0; color: #536887; font-size: .8rem; list-style: none; }
 .teamSelectors { display: grid; gap: .8rem; margin-bottom: 1rem; }
+.teamSelectorGroup { display: grid; gap: .8rem; }
 .teamSelectors label { display: grid; gap: .4rem; color: #536887; font-size: .85rem; font-weight: 800; }
 .teamSelectors select {
   width: 100%;
@@ -265,5 +303,6 @@
   .teamSelectors { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .teamPreviewGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .matchupGrid { grid-template-areas: "team-one timer team-two"; grid-template-columns: minmax(0, 1fr) minmax(10rem, .7fr) minmax(0, 1fr); }
+  .championGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .linkList { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }

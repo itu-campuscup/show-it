@@ -34,18 +34,29 @@ const comparison: TeamComparison = {
   ],
 };
 
+const comparison2026: TeamComparison = {
+  schemaVersion: 1,
+  generatedAt: "2026-09-09T19:07:12.149Z",
+  teams: [team("team-2026", "Future Anchors", [99, 98, 97])],
+};
+
 describe("team comparison rendering", () => {
-  test("offers every team for the selected year, including inactive teams", () => {
+  test("renders independently selected team-years", () => {
     const markup = renderToStaticMarkup(
       <TeamComparisonBoard
-        initialComparison={comparison}
-        availableYears={[2025, 2024]}
-        selectedYear={2025}
+        initialTeamOne={{ year: 2025, comparison }}
+        initialTeamTwo={{ year: 2026, comparison: comparison2026 }}
+        initialTeam1Id="team-1"
+        initialTeam2Id="team-2026"
+        availableYears={[2026, 2025]}
       />,
     );
     expect(markup).toContain("<option value=\"2025\" selected=\"\">2025</option>");
-    expect(markup.match(/Anchors/g)).toHaveLength(2);
-    expect(markup.match(/Spinners \(Inactive\)/g)).toHaveLength(2);
+    expect(markup).toContain("<option value=\"2026\" selected=\"\">2026</option>");
+    expect(markup).toContain("Anchors");
+    expect(markup).toContain("Future Anchors");
+    expect(markup).toContain("Anchors performance: Beer 93%, Sail 89%, Spin 94%");
+    expect(markup).toContain("Future Anchors performance: Beer 99%, Sail 98%, Spin 97%");
   });
 
   test("renders canonical Beer, Sail, and Spin radar values", () => {

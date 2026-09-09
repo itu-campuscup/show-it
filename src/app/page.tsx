@@ -1,10 +1,13 @@
-import { HeatDashboard } from "@/components/HeatDashboard";
-import { fetchCurrentHeatSnapshot } from "@/lib/snapshotSource";
+import { ChampionDashboard } from "@/components/ChampionDashboard";
+import { selectLatestChampions } from "@/lib/championSelection";
+import { fetchRanking } from "@/lib/rankingSource";
+import { fetchAvailableYears } from "@/lib/yearSelection";
 
 export default async function Home() {
   try {
-    return <HeatDashboard initialSnapshot={await fetchCurrentHeatSnapshot()} />;
+    const champions = await selectLatestChampions(await fetchAvailableYears(), (activity, year) => fetchRanking(activity, year));
+    return <ChampionDashboard champions={champions} />;
   } catch (cause) {
-    return <HeatDashboard initialSnapshot={null} initialError={cause instanceof Error ? cause.message : "Could not load spectator snapshot"} />;
+    return <ChampionDashboard champions={null} error={cause instanceof Error ? cause.message : "Could not load published champions"} />;
   }
 }
