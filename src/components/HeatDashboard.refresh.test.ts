@@ -127,7 +127,7 @@ describe("current heat refresh boundary", () => {
 
     expect(received).toEqual(["2026-05-17T12:01:00.000Z"]);
     expect(successes).toBe(3);
-    expect(refresh.current.generatedAt).toBe("2026-05-17T12:01:00.000Z");
+    expect(refresh.current?.generatedAt).toBe("2026-05-17T12:01:00.000Z");
     refresh.dispose();
   });
 
@@ -186,7 +186,7 @@ describe("current heat refresh boundary", () => {
     await firstRun;
 
     expect(received).toEqual(["2026-05-17T12:02:00.000Z"]);
-    expect(refresh.current.generatedAt).toBe("2026-05-17T12:02:00.000Z");
+    expect(refresh.current?.generatedAt).toBe("2026-05-17T12:02:00.000Z");
     refresh.dispose();
   });
 

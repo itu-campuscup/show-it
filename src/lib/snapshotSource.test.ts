@@ -21,10 +21,10 @@ afterEach(() => {
 describe("public current heat snapshot source", () => {
   test("fetches only the public snapshot with no-store and omitted credentials", async () => {
     const calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
-    globalThis.fetch = async (input, init) => {
+    globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
       calls.push({ input, init });
-      return new Response(JSON.stringify(snapshot), { status: 200, headers: { "content-type": "application/json" } });
-    };
+      return Promise.resolve(new Response(JSON.stringify(snapshot), { status: 200, headers: { "content-type": "application/json" } }));
+    }) as typeof fetch;
 
     const result = await fetchCurrentHeatSnapshot("https://stats.example/");
 
@@ -35,16 +35,16 @@ describe("public current heat snapshot source", () => {
   });
 
   test("rejects non-OK responses", async () => {
-    globalThis.fetch = async () => new Response("unavailable", { status: 503 });
+    globalThis.fetch = (async () => new Response("unavailable", { status: 503 })) as unknown as typeof fetch;
 
     await expect(fetchCurrentHeatSnapshot()).rejects.toThrow("503");
   });
 
   test("rejects malformed JSON and invalid snapshot bodies", async () => {
-    globalThis.fetch = async () => new Response("not json", { status: 200 });
+    globalThis.fetch = (async () => new Response("not json", { status: 200 })) as unknown as typeof fetch;
     await expect(fetchCurrentHeatSnapshot()).rejects.toThrow("malformed");
 
-    globalThis.fetch = async () => new Response(JSON.stringify({ schemaVersion: 2 }), { status: 200 });
+    globalThis.fetch = (async () => new Response(JSON.stringify({ schemaVersion: 2 }), { status: 200 })) as unknown as typeof fetch;
     await expect(fetchCurrentHeatSnapshot()).rejects.toThrow("Unsupported snapshot");
   });
 });

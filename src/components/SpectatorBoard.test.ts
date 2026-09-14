@@ -68,7 +68,7 @@ describe("published ranking refresh boundary", () => {
 
     expect(received).toHaveLength(0);
     expect(errors).toHaveLength(1);
-    expect(refresh.current.generatedAt).toBe("2026-05-17T12:00:00.000Z");
+    expect(refresh.current?.generatedAt).toBe("2026-05-17T12:00:00.000Z");
     refresh.dispose();
   });
 

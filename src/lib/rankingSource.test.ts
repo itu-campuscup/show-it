@@ -25,10 +25,10 @@ const spinRanking = {
 describe("published year ranking source", () => {
   test("loads the requested year and maps publisher durations", async () => {
     const calls: string[] = [];
-    globalThis.fetch = async (input) => {
+    globalThis.fetch = (async (input) => {
       calls.push(String(input));
       return new Response(JSON.stringify(spinRanking));
-    };
+    }) as typeof fetch;
 
     const ranking = await fetchRanking("spin", 2025, "https://stats.example/");
 
@@ -37,12 +37,12 @@ describe("published year ranking source", () => {
   });
 
   test("rejects a ranking for a different activity", async () => {
-    globalThis.fetch = async () => new Response(JSON.stringify({ ...spinRanking, timeType: "Sail" }));
+    globalThis.fetch = (async () => new Response(JSON.stringify({ ...spinRanking, timeType: "Sail" }))) as unknown as typeof fetch;
     await expect(fetchRanking("spin", 2025)).rejects.toThrow("did not match");
   });
 
   test("rejects a ranking for a different year", async () => {
-    globalThis.fetch = async () => new Response(JSON.stringify({ ...spinRanking, year: 2024 }));
+    globalThis.fetch = (async () => new Response(JSON.stringify({ ...spinRanking, year: 2024 }))) as unknown as typeof fetch;
     await expect(fetchRanking("spin", 2025)).rejects.toThrow("did not match");
   });
 });

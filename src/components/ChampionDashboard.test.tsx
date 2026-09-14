@@ -1,9 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ChampionRankings } from "@/lib/championSelection";
+import type { Activity } from "@/lib/stats";
+import type { Ranking } from "@/lib/ranking";
 import { ChampionDashboard } from "./ChampionDashboard";
 
-const ranking = (activity: "beer" | "sail" | "spin", displayLabel: string) => ({
+const ranking = (activity: Activity, displayLabel: string): Ranking => ({
   activity,
   year: 2026,
   generatedAt: "2026-09-09T19:07:12.149Z",
