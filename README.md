@@ -23,11 +23,15 @@
   <a href="https://github.com/itu-campuscup/show-it/issues/new?labels=enhancement">Suggest an enhancement</a>
 </p>
 
+Welcome to **Show IT**! This project was initiated by [the Development Responsible](https://links.lucashanson.dk/gh) of the CampusCup 2025–2026 board after we saw that spectators enjoyed following the competition statistics. It makes published champions, rankings, and team comparisons available to the crowd without exposing the judging system.
+
+The CampusCup board is responsible for the project, while volunteers are welcome to contribute.
+
 Show IT is the public, mobile-first CampusCup spectator frontend. It presents champions from the latest complete ranked year alongside Beer, Spin, Sail, and team comparison views at [show.campuscup.dk](https://show.campuscup.dk/).
 
 ## Why Show IT?
 
-The competition is easier to follow when spectators can see the current heat and the best performances in one place. Show IT gives the crowd a focused view of race progress and published rankings without exposing the protected systems used to run CampusCup.
+The competition is easier to follow when spectators can see standout performances and compare teams in one place. Show IT gives the crowd a focused public view of published CampusCup results without exposing the protected systems used to run the event.
 
 ## Table of contents
 
