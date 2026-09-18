@@ -23,7 +23,7 @@
   <a href="https://github.com/itu-campuscup/show-it/issues/new?labels=enhancement">Suggest an enhancement</a>
 </p>
 
-Show IT is the public, mobile-first CampusCup spectator frontend. It presents the current heat and year-wide Beer, Spin, Sail, and team comparison views at [show.campuscup.dk](https://show.campuscup.dk/).
+Show IT is the public, mobile-first CampusCup spectator frontend. It presents champions from the latest complete ranked year alongside Beer, Spin, Sail, and team comparison views at [show.campuscup.dk](https://show.campuscup.dk/).
 
 ## Why Show IT?
 
@@ -36,6 +36,7 @@ The competition is easier to follow when spectators can see the current heat and
 - [Public data contract](#public-data-contract)
 - [Schema reference](#schema-reference)
 - [Local development](#local-development)
+- [Dependency updates](#dependency-updates)
 - [Testing](#testing)
 - [Deploy to Vercel](#deploy-to-vercel)
 - [Contributing](#contributing)
@@ -44,13 +45,13 @@ The competition is easier to follow when spectators can see the current heat and
 
 ## Routes
 
-- `/` — current heat matchup, teams, sailors, race timer, and winner.
+- `/` — Beer, Sail, and Spin champions from the latest published year with complete rankings.
 - `/drink/` — year-wide Beer rankings across every heat.
 - `/spin/` — year-wide ten-revolution RPM rankings across every heat.
 - `/sail/` — year-wide Sail time rankings across every heat.
 - `/teams/` — two-team Beer, Sail, and Spin performance comparison.
 
-Ranking and team views accept a `?year=YYYY` query parameter for a published year. The available-year selector is loaded from the public data manifest.
+Ranking views accept a `?year=YYYY` query parameter. Each side of the team comparison can select its own published year and team.
 
 ## Architecture and data boundary
 
@@ -66,7 +67,7 @@ GitHub Pages (public data) ──► Show IT on Vercel ──► spectators
 
 Show IT and browser clients consume only static JSON published by [judge-it-stats](https://github.com/itu-campuscup/judge-it-stats) on GitHub Pages. They never call Judge IT, Convex, or the protected `/stats` endpoint. The schema submodule is reference material only; it is not imported into the browser bundle.
 
-The homepage, ranking views, and team comparison poll their published JSON every minute. A publication older than seven minutes is marked stale rather than presented as current.
+The homepage selects champions from the latest published year with complete Beer, Sail, and Spin rankings. Ranking and team views refresh their published data every minute.
 
 ## Public data contract
 
@@ -77,7 +78,7 @@ The default public data source is `https://itu-campuscup.github.io/judge-it-stat
 - `rankings/{year}/spin.json` for ten-revolution RPM rankings.
 - `rankings/{year}/sail.json` for Sail rankings.
 - `teams/{year}/index.json` for the team comparison view.
-- `current-heat.json` for the homepage's current matchup, sailors, timer, and winner.
+- `current-heat.json` for the reusable live-heat dashboard projection.
 
 The versioned current-heat contract and relay rules are documented in [`docs/current-heat-snapshot.md`](docs/current-heat-snapshot.md). For local or staging work, override the source with `NEXT_PUBLIC_STATS_BASE_URL`.
 
@@ -104,11 +105,17 @@ Requirements: [Bun](https://bun.com/) and Git with submodule support.
 ```bash
 git clone --recurse-submodules https://github.com/itu-campuscup/show-it.git
 cd show-it
-bun install --backend copyfile
+bun install
 bun dev
 ```
 
 The development server runs at [http://localhost:3000](http://localhost:3000). If the repository was cloned without submodules, run `git submodule update --init --recursive` before working with the schema reference.
+
+## Dependency updates
+
+Dependabot checks Bun dependencies weekly and groups normal version updates into one pull request. It maintains at most one open version-update pull request; Dependabot security updates remain separate.
+
+[`bunfig.toml`](bunfig.toml) requires new direct and transitive dependency resolutions to be at least seven days old. Existing entries in [`bun.lock`](bun.lock) remain valid until they are resolved again.
 
 ## Testing
 
